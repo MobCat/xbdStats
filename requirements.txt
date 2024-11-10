@@ -1,0 +1,2 @@
+discord_rich_presence==1.1.0
+websockets==10.3
