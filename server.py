@@ -12,7 +12,8 @@ presence = Presence(clientID)
 
 # If you host your own ver of the DB, then you can point to it here
 # However I haven't made all the code of this public yet sooo...
-CDNURL = "https://mobcat.zip/XboxIDs"
+APIURL = "https://mobcat.zip/XboxIDs"
+CDNURL = "https://raw.githubusercontent.com/MobCat/MobCats-original-xbox-game-list/main/icon"
 
 # Get server ip because I'm to lazy to type it. It should only be manually set on the clients side anyways.
 def getIP():
@@ -31,7 +32,7 @@ def getIP():
 # Helper func to lookup title ids
 def lookupID(titleID):
 	try:
-		with urllib.request.urlopen(f"{CDNURL}/api.php?id={titleID}") as url:
+		with urllib.request.urlopen(f"{APIURL}/api.php?id={titleID}") as url:
 			apiData = json.load(url)
 			if 'error' not in apiData:
 				XMID = apiData[0]['XMID']
@@ -54,13 +55,17 @@ def lookupID(titleID):
 async def clientHandler(websocket: wetSocks):
 	try:
 		# The websocket is already open when this handler is called
-		print(f"{websocket.remote_address} Xbox connected!")
+		print(f"{int(time.time())} {websocket.remote_address} Xbox connected!")
 		
 		# Handle messages until xbox disconnects
 		async for message in websocket:
+			#Debug message
+			print(f"{int(time.time())} {websocket.remote_address} {message}")
 			#TODO: We should filter user input, but for now fuck it we ball. API already filters input, so it would be just to protect server from bad input.
+			dataIn = json.loads(message)
 			#PLEASE NOTE: We are doing a XMID lookup based on a title id. this has a 50/50/90 % chance of working. a lot of the time PAL and NTSC have the same title id.
-			XMID, TitleName = lookupID(message)
+			XMID, TitleName = lookupID(dataIn['id'])
+			inTitleID = dataIn['id'].upper()
 
 			# Default presence data
 			presenceData = {
@@ -70,8 +75,8 @@ async def clientHandler(websocket: wetSocks):
 					"start": int(time.time()),
 				},
 				"assets": {
-					"large_image": f"{CDNURL}/title.php?{XMID}&thumbnail=png",
-					"large_text":  f"TitleID: {message}",
+					"large_image": f"{CDNURL}/{inTitleID[:4]}/{inTitleID}.png",
+					"large_text":  f"TitleID: {dataIn['id']}",
 					"small_image": "https://cdn.discordapp.com/avatars/1304454011503513600/6be191f921ebffb2f9a52c1b6fc26dfa",
 				},
 				"instance": True,
@@ -79,22 +84,27 @@ async def clientHandler(websocket: wetSocks):
 
 			# Only append the title info button if that title is indeed in the database
 			if XMID != "00000000":
-				presenceData["buttons"] = [{"label": "Title Info", "url": f"{CDNURL}/title.php?{XMID}",}]
+				presenceData["buttons"] = [{"label": "Title Info", "url": f"{APIURL}/title.php?{XMID}",}]
+			else:
+				# Only append custom title name if title is not in db, and we supply a custom name in the first place
+				if 'name' in dataIn.keys() and dataIn['name'] != '':
+					presenceData['details'] = dataIn['name']
+					TitleName = dataIn['name']
 
 			# Now we have some game info.. hopefully.. we can set our discord presence
 			presence.set(presenceData)
-			print(f"Now Playing {message} ({XMID}) - {TitleName}")
+			print(f"{int(time.time())} Now Playing {dataIn['id']} ({XMID}) - {TitleName}")
 
 			#TODO: Maybe do a check / echo back to xbox for yes, the server got your message, we have set discord presence. or no something went wrong.
 			#await websocket.send(f"OK")
 			
 	except websockets.ConnectionClosedOK:
-		print("Client disconnected normally")
+		print(f"{int(time.time())} {websocket.remote_address} Client disconnected normally")
 	except websockets.ConnectionClosedError as e:
-		print(f"Client disconnected with error: {e}")
+		print(f"{int(time.time())} {websocket.remote_address} Client disconnected with error: {e}")
 	finally:
 		if websocket.closed:
-			print("Connection closed. Presence cleared.")
+			print(f"{int(time.time())} {websocket.remote_address} Connection closed. Presence cleared.")
 			presence.clear() # This kinda does work, just slow for some reason, like 5 secs slow.
 			#TODO: If no xbox connection in 10 mins, shutdown the server and clear presence.
             # So you don't get stuck "playing halo" for 2 weeks even know your xbox is off.
