@@ -14,16 +14,19 @@ import asyncio, websockets
 
 # Change this to whatever the server ws://ip is.
 serverIP = '192.168.1.87'
+#dataOut  = {}
 
 async def sendMessages():
 	try:
 		async with websockets.connect(f'ws://{serverIP}:1102') as websocket:
 			while True:
 				message = await asyncio.get_event_loop().run_in_executor(None, input, "Enter TitleID (or 'q' to quit): ")
+				#dataOut['id'] = message
+				dataOut = '{"id": "'+message+'"}'
 				if message.lower() == 'q':
 					await websocket.close()
 					break
-				await websocket.send(message)
+				await websocket.send(dataOut)
 	except ConnectionRefusedError:
 		print("ERROR: The xbdStats server is missing or not ready.\nReboot the server and try again.")
 
