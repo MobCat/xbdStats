@@ -14,17 +14,6 @@ start /wait C:\Python312\Scripts\cxfreeze.exe "clientTest.py" --target-dir "!ext
 :Start
 	ren "!archive_name!\Xboxdash_5960_Colourizer.exe" "!archive_name!.exe"
 	call Echo d | XCopy /s /e /i /h /r /y "skins" "!archive_name!\skins"
-	md "!archive_name!\xbe file"
-
-	attrib +h +s "!archive_name!\lib"
-	attrib +h -s "!archive_name!\frozen_application_license.txt"
-	attrib +h -s "!archive_name!\python3.dll"
-	attrib +h -s "!archive_name!\python312.dll"
-
-	attrib +h +s "!extra_name!\lib"
-	attrib +h -s "!extra_name!\frozen_application_license.txt"
-	attrib +h -s "!extra_name!\python3.dll"
-	attrib +h -s "!extra_name!\python312.dll"
 
 	"!zip!" a "!archive_name!.zip" "!archive_name!" -mx=7 -r -y
 	"!zip!" a "!archive_name!.zip" "!extra_name!" -mx=7 -r -y

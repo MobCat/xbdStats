@@ -4,13 +4,13 @@
 #/Modified by Rocky5 (2025)
 
 # Install dependencies
-import sys, subprocess, importlib, os
-dependencies = {"discord_rich_presence": "discord_rich_presence==1.1.0", "websockets": "websockets==10.3"}
-for module, package in dependencies.items():
-	try: importlib.import_module(module)
-	except ImportError:
-		with open(os.devnull, "w") as devnull:
-			subprocess.check_call([sys.executable, "-m", "pip", "install", package], stdout=devnull, stderr=devnull)
+# import sys, subprocess, importlib, os
+# dependencies = {"discord_rich_presence": "discord_rich_presence==1.1.0", "websockets": "websockets==10.3"}
+# for module, package in dependencies.items():
+	# try: importlib.import_module(module)
+	# except ImportError:
+		# with open(os.devnull, "w") as devnull:
+			# subprocess.check_call([sys.executable, "-m", "pip", "install", package], stdout=devnull, stderr=devnull)
 
 import asyncio
 import websockets, socket, time, urllib.request, json
@@ -21,6 +21,7 @@ from websockets.server import WebSocketServerProtocol as wetSocks
 clientID = "1304454011503513600" # Discord client ID
 presence = Presence(clientID)
 showadditionalinfo = 0
+smallimage = "https://cdn.discordapp.com/avatars/1304454011503513600/6be191f921ebffb2f9a52c1b6fc26dfa"
 
 APIURL = "https://mobcat.zip/XboxIDs"
 CDNURL = "https://raw.githubusercontent.com/MobCat/MobCats-original-xbox-game-list/main/icon"
@@ -61,16 +62,23 @@ async def clientHandler(websocket: wetSocks):
 			XMID, TitleName = lookupID(dataIn['id'])
 			inTitleID = dataIn['id'].upper()
 
+			large_image = f"{CDNURL}/{inTitleID[:4]}/{inTitleID}.png"
+			
+			try:
+				with urllib.request.urlopen(large_image) as response:
+					if response.status != 200:
+						large_image = smallimage
+			except:
+				large_image = smallimage
+
 			presenceData = {
 				"type": 0,
 				"details": TitleName,
-				"timestamps": {
-					"start": int(time.time()),
-				},
+				"timestamps": {"start": int(time.time())},
 				"assets": {
-					"large_image": f"{CDNURL}/{inTitleID[:4]}/{inTitleID}.png",
-					"large_text":  f"TitleID: {dataIn['id']}",
-					"small_image": "https://cdn.discordapp.com/avatars/1304454011503513600/6be191f921ebffb2f9a52c1b6fc26dfa",
+					"large_image": large_image,
+					"large_text": f"TitleID: {dataIn['id']}",
+					"small_image": smallimage
 				},
 				"instance": True,
 			}
@@ -108,14 +116,23 @@ def listen_udp():
 			XMID, TitleName = lookupID(dataIn['id'])
 			inTitleID = dataIn['id'].upper()
 
+			large_image = f"{CDNURL}/{inTitleID[:4]}/{inTitleID}.png"
+			
+			try:
+				with urllib.request.urlopen(large_image) as response:
+					if response.status != 200:
+						large_image = smallimage
+			except:
+				large_image = smallimage
+
 			presenceData = {
 				"type": 0,
 				"details": TitleName,
-				"timestamps": { "start": int(time.time()) },
+				"timestamps": {"start": int(time.time())},
 				"assets": {
-					"large_image": f"{CDNURL}/{inTitleID[:4]}/{inTitleID}.png",
+					"large_image": large_image,
 					"large_text": f"TitleID: {dataIn['id']}",
-					"small_image": "https://cdn.discordapp.com/avatars/1304454011503513600/6be191f921ebffb2f9a52c1b6fc26dfa"
+					"small_image": smallimage
 				},
 				"instance": True,
 			}
@@ -153,7 +170,7 @@ async def main():
 
 # Banner + launch
 print(r'''
-      _         _ __ _         _       
+	  _         _ __ _         _       
 __  _| |__   __| / _\ |_  __ _| |_ ___ 
 \ \/ / '_ \ / _` \ \| __|/ _` | __/ __|
  >  <| |_) | (_| |\ \ |_  (_| | |_\__ \\
