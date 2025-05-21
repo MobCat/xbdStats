@@ -20,8 +20,8 @@ from websockets.server import WebSocketServerProtocol as wetSocks
 
 clientID = "1304454011503513600" # Discord client ID
 presence = Presence(clientID)
-showadditionalinfo = 0
 smallimage = "https://cdn.discordapp.com/avatars/1304454011503513600/6be191f921ebffb2f9a52c1b6fc26dfa"
+showadditionalinfo = 0
 
 APIURL = "https://mobcat.zip/XboxIDs"
 CDNURL = "https://raw.githubusercontent.com/MobCat/MobCats-original-xbox-game-list/main/icon"
@@ -55,9 +55,9 @@ def lookupID(titleID):
 
 async def clientHandler(websocket: wetSocks):
 	try:
-		print(f"{int(time.time())} {websocket.remote_address} Xbox connected!")
+		print(f"  {int(time.time())} {websocket.remote_address} Xbox connected!")
 		async for message in websocket:
-			print(f"{int(time.time())} {websocket.remote_address} {message}")
+			print(f"  {int(time.time())} {websocket.remote_address} {message}")
 			dataIn = json.loads(message)
 			XMID, TitleName = lookupID(dataIn['id'])
 			inTitleID = dataIn['id'].upper()
@@ -90,27 +90,27 @@ async def clientHandler(websocket: wetSocks):
 				presenceData["buttons"] = [{"label": "Title Info", "url": f"{APIURL}/title.php?{XMID}"}]
 
 			presence.set(presenceData)
-			print(f"{int(time.time())} Now Playing {dataIn['id']} ({XMID}) - {TitleName}")
+			print(f"  {int(time.time())} Now Playing {dataIn['id']} ({XMID}) - {TitleName}")
 	except websockets.ConnectionClosedOK:
-		print(f"{int(time.time())} {websocket.remote_address} Client disconnected normally")
+		print(f"  {int(time.time())} {websocket.remote_address} Client disconnected normally")
 	except websockets.ConnectionClosedError as e:
-		print(f"{int(time.time())} {websocket.remote_address} Client disconnected with error: {e}")
+		print(f"  {int(time.time())} {websocket.remote_address} Client disconnected with error: {e}")
 	finally:
 		if websocket.closed:
-			print(f"{int(time.time())} {websocket.remote_address} Connection closed. Presence cleared.")
+			print(f"  {int(time.time())} {websocket.remote_address} Connection closed. Presence cleared.")
 			presence.clear()
 
 # === UDP listener added here ===
 def listen_udp():
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock.bind(('0.0.0.0', 1102))  # Same port as WebSocket
-	print("[UDP] Listening for raw relay packets on port 1102...")
+	print("  [UDP] Listening for raw relay packets on port 1102...")
 
 	while True:
 		data, addr = sock.recvfrom(1024)
 		try:
 			message = data.decode("utf-8").strip()
-			if showadditionalinfo: print(f"[UDP] From {addr}: {message}")
+			if showadditionalinfo: print(f"  [UDP] From {addr}: {message}")
 			dataIn = json.loads(message)
 
 			XMID, TitleName = lookupID(dataIn['id'])
@@ -144,38 +144,38 @@ def listen_udp():
 				presenceData["buttons"] = [{"label": "Title Info", "url": f"{APIURL}/title.php?{XMID}"}]
 
 			presence.set(presenceData)
-			print(f"[UDP] Now Playing: {TitleName}\n          TitleID: {dataIn['id']} ({XMID})")
+			print(f"  [UDP] Now Playing: {TitleName}\n            TitleID: {dataIn['id']} ({XMID})")
 
 		except Exception as e:
-			print(f"[UDP ERROR] {e}")
+			print(f"  [UDP ERROR] {e}")
 
 # === Main async WebSocket server entry point ===
 async def main():
 	serverIP = getIP()
 	server = await websockets.serve(clientHandler, serverIP, 1102)
-	print(f"Server started on ws://{serverIP}:1102\nWaiting for connection...")
+	print(f"  Server started on ws://{serverIP}:1102\n  Waiting for connection...")
 
 	threading.Thread(target=listen_udp, daemon=True).start()
 
 	try:
 		await asyncio.Future()
 	except KeyboardInterrupt:
-		print("\nShutting down server...")
+		print("\n  Shutting down server...")
 	finally:
 		presence.close()
 		server.close()
 		await server.wait_closed()
-		print("Server closed")
+		print("  Server closed")
 		exit()
 
 # Banner + launch
 print(r'''
-      _         _ __ _         _       
-__  _| |__   __| / _\ |_  __ _| |_ ___ 
-\ \/ / '_ \ / _` \ \| __|/ _` | __/ __|
- >  <| |_) | (_| |\ \ |_  (_| | |_\__ \\
-/_/\_\_.__/ \__,_\__/\__|\__,_|\__|___/
-xbdStats Server 20241111
+        _         _ __ _         _       
+  __  _| |__   __| / _\ |_  __ _| |_ ___ 
+  \ \/ / '_ \ / _` \ \| __|/ _` | __/ __|
+   >  <| |_) | (_| |\ \ |_  (_| | |_\__ \
+  /_/\_\_.__/ \__,_\__/\__|\__,_|\__|___/
+  xbdStats Server 20241111
 ''')
 
 asyncio.run(main())

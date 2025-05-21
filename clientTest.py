@@ -27,14 +27,14 @@ async def sendMessages():
 		clear_screen()
 		async with connect(f'ws://{serverIP}:1102') as websocket:
 			while True:
-				message = await asyncio.get_event_loop().run_in_executor(None, input, "Enter TitleID (or 'q' to quit): ")
+				message = await asyncio.get_event_loop().run_in_executor(None, input, "  Enter TitleID (or 'q' to quit): ")
 				dataOut = '{"id": "'+message+'"}'
 				if message.lower() == 'q':
 					await websocket.close()
 					break
 				await websocket.send(dataOut)
 	except ConnectionRefusedError:
-		print("ERROR: The xbdStats server is missing or not ready.\nReboot the server and try again.")
+		print("  ERROR: The xbdStats server is missing or not ready.\nReboot the server and try again.")
 
 def clear_screen():
 	if os.name == 'nt':
@@ -52,7 +52,7 @@ def get_server_ip():
 	try:
 		return config.get('server', 'ip')
 	except (configparser.NoSectionError, configparser.NoOptionError):
-		print(f"ERROR: Unable to retrieve server IP from {config_path}")
+		print(f"  ERROR: Unable to retrieve server IP from {config_path}")
 		return None
 
 async def server_connect(serverIP, retries=10, delay=2):
@@ -61,9 +61,9 @@ async def server_connect(serverIP, retries=10, delay=2):
 			async with connect(f'ws://{serverIP}:1102'):
 				return True
 		except:
-			print(f"Retrying: {attempt + 1}/{retries}")
+			print(f"  Retrying: {attempt + 1}/{retries}")
 			await asyncio.sleep(delay)
-	print("ERROR: Server is not running?")
+	print("  ERROR: Server is not running?")
 	return False
 
 asyncio.run(sendMessages())
