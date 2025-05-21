@@ -1,7 +1,7 @@
 
 #!/env/Python3.10.4
 #/MobCat (2024)
-#/Modified but Rocky5 (2025)
+#/Modified by Rocky5 (2025)
 
 # Install dependencies
 import sys, subprocess, importlib, os
