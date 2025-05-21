@@ -1,6 +1,16 @@
 
 #!/env/Python3.10.4
 #/MobCat (2024)
+#/Modified but Rocky5 (2025)
+
+# Install dependencies
+import sys, subprocess, importlib, os
+dependencies = {"discord_rich_presence": "discord_rich_presence==1.1.0", "websockets": "websockets==10.3"}
+for module, package in dependencies.items():
+	try: importlib.import_module(module)
+	except ImportError:
+		with open(os.devnull, "w") as devnull:
+			subprocess.check_call([sys.executable, "-m", "pip", "install", package], stdout=devnull, stderr=devnull)
 
 import asyncio
 import websockets, socket, time, urllib.request, json
@@ -10,6 +20,7 @@ from websockets.server import WebSocketServerProtocol as wetSocks
 
 clientID = "1304454011503513600" # Discord client ID
 presence = Presence(clientID)
+showadditionalinfo = 0
 
 APIURL = "https://mobcat.zip/XboxIDs"
 CDNURL = "https://raw.githubusercontent.com/MobCat/MobCats-original-xbox-game-list/main/icon"
@@ -64,11 +75,11 @@ async def clientHandler(websocket: wetSocks):
 				"instance": True,
 			}
 
-			if XMID != "00000000":
-				presenceData["buttons"] = [{"label": "Title Info", "url": f"{APIURL}/title.php?{XMID}",}]
-			elif 'name' in dataIn and dataIn['name']:
-				presenceData['details'] = dataIn['name']
-				TitleName = dataIn['name']
+			if "name" in dataIn and dataIn["name"] and dataIn["name"].strip() and dataIn["name"].lower() != "default.xbe":
+				presenceData["details"] = dataIn["name"]
+				TitleName = dataIn["name"]
+			elif XMID != "00000000":
+				presenceData["buttons"] = [{"label": "Title Info", "url": f"{APIURL}/title.php?{XMID}"}]
 
 			presence.set(presenceData)
 			print(f"{int(time.time())} Now Playing {dataIn['id']} ({XMID}) - {TitleName}")
@@ -91,7 +102,7 @@ def listen_udp():
 		data, addr = sock.recvfrom(1024)
 		try:
 			message = data.decode("utf-8").strip()
-			print(f"[UDP] From {addr}: {message}")
+			if showadditionalinfo: print(f"[UDP] From {addr}: {message}")
 			dataIn = json.loads(message)
 
 			XMID, TitleName = lookupID(dataIn['id'])
@@ -109,14 +120,14 @@ def listen_udp():
 				"instance": True,
 			}
 
-			if XMID != "00000000":
+			if "name" in dataIn and dataIn["name"] and dataIn["name"].strip() and dataIn["name"].lower() != "default.xbe":
+				presenceData["details"] = dataIn["name"]
+				TitleName = dataIn["name"]
+			elif XMID != "00000000":
 				presenceData["buttons"] = [{"label": "Title Info", "url": f"{APIURL}/title.php?{XMID}"}]
-			elif 'name' in dataIn and dataIn['name']:
-				presenceData["details"] = dataIn['name']
-				TitleName = dataIn['name']
 
 			presence.set(presenceData)
-			print(f"[UDP] Now Playing {dataIn['id']} ({XMID}) - {TitleName}")
+			print(f"[UDP] Now Playing: {TitleName}\n          TitleID: {dataIn['id']} ({XMID})")
 
 		except Exception as e:
 			print(f"[UDP ERROR] {e}")
