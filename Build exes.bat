@@ -1,5 +1,5 @@
 @Echo off
-title Xboxdash Colourizer to EXE
+title xbdStats to EXE
 Mode con:cols=70 lines=11
 Color 0B
 setlocal enabledelayedexpansion
@@ -12,9 +12,6 @@ start /wait C:\Python312\Scripts\cxfreeze.exe "server.py" --target-dir "XBDStats
 start /wait C:\Python312\Scripts\cxfreeze.exe "clientTest.py" --target-dir "!extra_name!"
 
 :Start
-	ren "!archive_name!\Xboxdash_5960_Colourizer.exe" "!archive_name!.exe"
-	call Echo d | XCopy /s /e /i /h /r /y "skins" "!archive_name!\skins"
-
 	"!zip!" a "!archive_name!.zip" "!archive_name!" -mx=7 -r -y
 	"!zip!" a "!archive_name!.zip" "!extra_name!" -mx=7 -r -y
 
