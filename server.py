@@ -25,6 +25,8 @@ showadditionalinfo = 0
 
 APIURL = "https://mobcat.zip/XboxIDs"
 CDNURL = "https://raw.githubusercontent.com/MobCat/MobCats-original-xbox-game-list/main/icon"
+UDP_PORT = 1102
+TCP_PORT = UDP_PORT + 1
 
 def getIP():
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -90,7 +92,7 @@ async def clientHandler(websocket: wetSocks):
 				presenceData["buttons"] = [{"label": "Title Info", "url": f"{APIURL}/title.php?{XMID}"}]
 
 			presence.set(presenceData)
-			print(f"  {int(time.time())} Now Playing {dataIn['id']} ({XMID}) - {TitleName}")
+			print(f"  {int(time.time())} Playing: {TitleName}\n             TitleID: {dataIn['id']} ({XMID})")
 	except websockets.ConnectionClosedOK:
 		print(f"  {int(time.time())} {websocket.remote_address} Client disconnected normally")
 	except websockets.ConnectionClosedError as e:
@@ -103,14 +105,14 @@ async def clientHandler(websocket: wetSocks):
 # === UDP listener added here ===
 def listen_udp():
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	sock.bind(('0.0.0.0', 1102))  # Same port as WebSocket
-	print("  [UDP] Listening for raw relay packets on port 1102...")
+	sock.bind(('0.0.0.0', UDP_PORT))  # Same port as WebSocket
+	print(f"  [UDP] Listening for raw relay packets on port {UDP_PORT}...")
 
 	while True:
 		data, addr = sock.recvfrom(1024)
 		try:
 			message = data.decode("utf-8").strip()
-			if showadditionalinfo: print(f"  [UDP] From {addr}: {message}")
+			if showadditionalinfo: print(f"  [DEBUG] From {addr}: {message}")
 			dataIn = json.loads(message)
 
 			XMID, TitleName = lookupID(dataIn['id'])
@@ -144,18 +146,72 @@ def listen_udp():
 				presenceData["buttons"] = [{"label": "Title Info", "url": f"{APIURL}/title.php?{XMID}"}]
 
 			presence.set(presenceData)
-			print(f"  [UDP] Now Playing: {TitleName}\n            TitleID: {dataIn['id']} ({XMID})")
+			print(f"  [UDP-INFO] Playing: {TitleName}\n             TitleID: {dataIn['id']} ({XMID})")
 
 		except Exception as e:
 			print(f"  [UDP ERROR] {e}")
 
+def listen_tcp():
+	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	sock.bind(('0.0.0.0', TCP_PORT))  # WebSocket Port + 1  
+	sock.listen(5)
+	print(f"  [TCP] Listening for connections on port {TCP_PORT}...\n")
+
+	while True:
+		conn, addr = sock.accept()
+		try:
+			message = conn.recv(1024).decode("utf-8").strip()
+			if showadditionalinfo:
+				print(f"  [DEBUG] From {addr}: {message}")
+
+			dataIn = json.loads(message)
+
+			XMID, TitleName = lookupID(dataIn['id'])
+			inTitleID = dataIn['id'].upper()
+
+			large_image = f"{CDNURL}/{inTitleID[:4]}/{inTitleID}.png"
+			try:
+				with urllib.request.urlopen(large_image) as response:
+					if response.status != 200:
+						large_image = smallimage
+			except:
+				large_image = smallimage
+
+			presenceData = {
+				"type": 0,
+				"details": TitleName,
+				"timestamps": {"start": int(time.time())},
+				"assets": {
+					"large_image": large_image,
+					"large_text": f"TitleID: {dataIn['id']}",
+					"small_image": smallimage
+				},
+				"instance": True,
+			}
+
+			if "name" in dataIn and dataIn["name"] and dataIn["name"].strip() and dataIn["name"].lower() != "default.xbe":
+				presenceData["details"] = dataIn["name"]
+				TitleName = dataIn["name"]
+			elif XMID != "00000000":
+				presenceData["buttons"] = [{"label": "Title Info", "url": f"{APIURL}/title.php?{XMID}"}]
+
+			presence.set(presenceData)
+			print(f"  [TCP-INFO] Playing: {TitleName}\n             TitleID: {dataIn['id']} ({XMID})")
+
+		except Exception as e:
+			print(f"  [TCP ERROR] {e}")
+
+		finally:
+			conn.close()
+
 # === Main async WebSocket server entry point ===
 async def main():
 	serverIP = getIP()
-	server = await websockets.serve(clientHandler, serverIP, 1102)
-	print(f"  Server started on ws://{serverIP}:1102\n  Waiting for connection...")
+	server = await websockets.serve(clientHandler, serverIP, UDP_PORT)
+	print(f"  Server started on ws://{serverIP}:{UDP_PORT}\n  Waiting for connection...")
 
 	threading.Thread(target=listen_udp, daemon=True).start()
+	threading.Thread(target=listen_tcp, daemon=True).start()
 
 	try:
 		await asyncio.Future()
@@ -170,7 +226,7 @@ async def main():
 
 # Banner + launch
 print(r'''
-        _         _ __ _         _       
+		_         _ __ _         _       
   __  _| |__   __| / _\ |_  __ _| |_ ___ 
   \ \/ / '_ \ / _` \ \| __|/ _` | __/ __|
    >  <| |_) | (_| |\ \ |_  (_| | |_\__ \
