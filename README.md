@@ -1,19 +1,29 @@
 # xbdStats
-Discord now playing info for og xbox<br>
+Discord now playing info for og xbox and xbox 360<br>
 <img src="https://raw.githubusercontent.com/MobCat/xbdStats/refs/heads/main/img/Discord.jpg" width="350">
-> [!WARNING]  
-> This project is a "PoC".<br>
+> [!NOTE]  
+> This project is now in "beta".<br>
 > Just making sure this is even possible, let alone how to accomplish it in a sane and easy to use manor.<br>
-> So this is not a complete ready to use project... yet.<br>
-> Input and code is welcome though.
+> This project has expanded into something people can actually use but its still early days and still a little weird to set up.<br>
+> So please be patient. Input and code is welcome though.
 
-This project is a PoC for getting currently running title info from an og xbox into your discord client<br>
-so your friends on discord can see the games you are playing on your og xbox, the same way they can see games you are playing on pc or current xbox.<br>
-This project is Proof of Concept as we have the "Server" setup, the software that takes the title id and tells discord that you are playing xbox,<br>
-but we don't have the "client" software setup yet, the how do we get the currently running title info out of your xbox done yet.
+This project is a PoC for getting currently running title info from the xbox into your discord client<br>
+so your friends on discord can see the games you are playing on your xbox, the same way they can see games you are playing on pc.<br>
+This project is "beta" as we have the "Server" setup, the software that takes the title id and tells discord that you are playing xbox,<br>
+but the client side software and plugins on your xbox is still WIP.
 
-# How to test
-(There is no how to use yet as this project is not "finished", but you can test it out though)<br>
+# How to Use and setup
+Milenko has taken charge of getting this project out of PoC and into something usable, see more info here on the test branch.<br>
+<a href="https://github.com/OfficialTeamUIX/Xbox-Discord-Rich-Presence">https://github.com/OfficialTeamUIX/Xbox-Discord-Rich-Presence</a><br>
+But the TL;DR is have the discord client open on your computer then,<br> 
+Download and run the <a href="https://github.com/OfficialTeamUIX/Xbox-Discord-Rich-Presence/tree/main/xbdStats-go">`xbdStats-go`</a> server for your operating system<br>
+`xbdStats-go-linux` `xbdStats-go-macOS` or `xbdStats-go.exe`<br>
+Then you need to setup the <a href="https://github.com/OfficialTeamUIX/Xbox-Discord-Rich-Presence/tree/main/ShortcutRelayXBE/Release">`ShortcutRelayXBE.xbe`</a> and `shortcut.ini` for the game you want to report discord rich presence for.<br>
+Once the shortcut is loaded, it will talk to the server running on your computer, and this server will relay as a "game" to discord.<br>
+You can see info about this in the server log as it's running.
+
+# How to test the beta
+(This part of the code is if you want to test out the WIP code, otherwise if you just want to use it, run the pre-compiled binareys from the above section.)<br>
 0. If you don't have python 3 set up, do that now. also download the `requirements.txt` and run `pip install -r requirements.txt`<br>
 to pip install `discord_rich_presence` and `websockets` for this project.<br>
 1. Download the `server.py` and `testClient.py` from this repo to a folder on your computer, shouldn't matter where.
