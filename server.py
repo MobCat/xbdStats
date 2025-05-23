@@ -12,9 +12,7 @@
 		# with open(os.devnull, "w") as devnull:
 			# subprocess.check_call([sys.executable, "-m", "pip", "install", package], stdout=devnull, stderr=devnull)
 
-import asyncio
-import websockets, socket, time, urllib.request, json
-import threading
+import asyncio, configparser, json, os, socket, threading, time, urllib.request, websockets
 from discordrp import Presence
 from websockets.server import WebSocketServerProtocol as wetSocks
 
@@ -25,7 +23,28 @@ showadditionalinfo = 0
 
 APIURL = "https://mobcat.zip/XboxIDs"
 CDNURL = "https://raw.githubusercontent.com/MobCat/MobCats-original-xbox-game-list/main/icon"
-UDP_PORT = 1102
+CONFIG = "Server Settings.ini"
+
+def get_server_config():
+	base_path = os.path.dirname(os.path.abspath(__file__))
+	config_path = os.path.join(base_path, CONFIG)
+	if not os.path.exists(config_path):
+		config_path = os.path.join(base_path, '../../../', CONFIG)
+	config = configparser.ConfigParser()
+	config.read(config_path)
+	try:
+		server_port = config.getint('server', 'port')
+		if 1024 <= server_port <= 65535:
+			return server_port
+		else:
+			print(f"  ERROR: Invalid port {server_port} in config. Using default 1102.")
+			return 1102
+	except (configparser.NoSectionError, configparser.NoOptionError, ValueError):
+		print(f"  ERROR: Unable to retrieve port from {config_path}. Using default 1102.")
+		return 1102
+
+# Placed here so above can populate the port
+UDP_PORT = get_server_config()
 TCP_PORT = UDP_PORT + 1
 
 def getIP():
@@ -226,12 +245,12 @@ async def main():
 
 # Banner + launch
 print(r'''
-		_         _ __ _         _       
+        _         _ __ _         _       
   __  _| |__   __| / _\ |_  __ _| |_ ___ 
   \ \/ / '_ \ / _` \ \| __|/ _` | __/ __|
    >  <| |_) | (_| |\ \ |_  (_| | |_\__ \
   /_/\_\_.__/ \__,_\__/\__|\__,_|\__|___/
-  xbdStats Server 20241111
+  xbdStats Server 20250523
 ''')
 
 asyncio.run(main())

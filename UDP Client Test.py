@@ -28,6 +28,11 @@ def get_server_config():
 	try:
 		server_ip = config.get('server', 'ip')
 		server_port = config.getint('server', 'port')
+		if 1024 <= server_port <= 65535:
+			return server_ip, server_port
+		else:
+			print(f"  ERROR: Invalid port {server_port} in config. Using default 1102.")
+			return server_ip, 1102
 		return server_ip, server_port
 	except (configparser.NoSectionError, configparser.NoOptionError, ValueError):
 		print(f"  ERROR: Unable to retrieve server configuration from {config_path}")
