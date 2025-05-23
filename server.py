@@ -76,42 +76,16 @@ def lookupID(titleID):
 
 async def clientHandler(websocket: wetSocks):
 	try:
+		infolabel = int(time.time())
 		print(f"  {int(time.time())} {websocket.remote_address} Xbox connected!")
 		async for message in websocket:
 			print(f"  {int(time.time())} {websocket.remote_address} {message}")
 			dataIn = json.loads(message)
-			XMID, TitleName = lookupID(dataIn['id'])
-			inTitleID = dataIn['id'].upper()
-
-			large_image = f"{CDNURL}/{inTitleID[:4]}/{inTitleID}.png"
-			
-			try:
-				with urllib.request.urlopen(large_image) as response:
-					if response.status != 200:
-						large_image = smallimage
-			except:
-				large_image = smallimage
-
-			presenceData = {
-				"type": 0,
-				"details": TitleName,
-				"timestamps": {"start": int(time.time())},
-				"assets": {
-					"large_image": large_image,
-					"large_text": f"TitleID: {dataIn['id']}",
-					"small_image": smallimage
-				},
-				"instance": True,
-			}
-
-			if "name" in dataIn and dataIn["name"] and dataIn["name"].strip() and dataIn["name"].lower() != "default.xbe":
-				presenceData["details"] = dataIn["name"]
-				TitleName = dataIn["name"]
-			elif XMID != "00000000":
-				presenceData["buttons"] = [{"label": "Title Info", "url": f"{APIURL}/title.php?{XMID}"}]
-
-			presence.set(presenceData)
-			print(f"  {int(time.time())} Playing: {TitleName}\n             TitleID: {dataIn['id']} ({XMID})")
+			if not dataIn.get('id'):
+				print(f"  {infolabel} Presence cleared.")
+				presence.clear()
+				continue
+			process_message(dataIn, int(time.time()))
 	except websockets.ConnectionClosedOK:
 		print(f"  {int(time.time())} {websocket.remote_address} Client disconnected normally")
 	except websockets.ConnectionClosedError as e:
@@ -121,10 +95,11 @@ async def clientHandler(websocket: wetSocks):
 			print(f"  {int(time.time())} {websocket.remote_address} Connection closed. Presence cleared.")
 			presence.clear()
 
-# === UDP listener added here ===
+# === UDP listener ===
 def listen_udp():
+	infolabel = '[UDP-INFO]'
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	sock.bind(('0.0.0.0', UDP_PORT))  # Same port as WebSocket
+	sock.bind(('0.0.0.0', UDP_PORT))
 	print(f"  [UDP] Listening for raw relay packets on port {UDP_PORT}...")
 
 	while True:
@@ -133,46 +108,19 @@ def listen_udp():
 			message = data.decode("utf-8").strip()
 			if showadditionalinfo: print(f"  [DEBUG] From {addr}: {message}")
 			dataIn = json.loads(message)
-
-			XMID, TitleName = lookupID(dataIn['id'])
-			inTitleID = dataIn['id'].upper()
-
-			large_image = f"{CDNURL}/{inTitleID[:4]}/{inTitleID}.png"
-			
-			try:
-				with urllib.request.urlopen(large_image) as response:
-					if response.status != 200:
-						large_image = smallimage
-			except:
-				large_image = smallimage
-
-			presenceData = {
-				"type": 0,
-				"details": TitleName,
-				"timestamps": {"start": int(time.time())},
-				"assets": {
-					"large_image": large_image,
-					"large_text": f"TitleID: {dataIn['id']}",
-					"small_image": smallimage
-				},
-				"instance": True,
-			}
-
-			if "name" in dataIn and dataIn["name"] and dataIn["name"].strip() and dataIn["name"].lower() != "default.xbe":
-				presenceData["details"] = dataIn["name"]
-				TitleName = dataIn["name"]
-			elif XMID != "00000000":
-				presenceData["buttons"] = [{"label": "Title Info", "url": f"{APIURL}/title.php?{XMID}"}]
-
-			presence.set(presenceData)
-			print(f"  [UDP-INFO] Playing: {TitleName}\n             TitleID: {dataIn['id']} ({XMID})")
-
+			if not dataIn.get('id'):
+				print(f"  {infolabel} Presence cleared.")
+				presence.clear()
+				continue
+			process_message(dataIn, '[UDP-INFO]')
 		except Exception as e:
 			print(f"  [UDP ERROR] {e}")
 
+# === TCP listener ===
 def listen_tcp():
+	infolabel = '[TCP-INFO]'
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	sock.bind(('0.0.0.0', TCP_PORT))  # WebSocket Port + 1  
+	sock.bind(('0.0.0.0', TCP_PORT))
 	sock.listen(5)
 	print(f"  [TCP] Listening for connections on port {TCP_PORT}...\n")
 
@@ -180,48 +128,51 @@ def listen_tcp():
 		conn, addr = sock.accept()
 		try:
 			message = conn.recv(1024).decode("utf-8").strip()
-			if showadditionalinfo:
-				print(f"  [DEBUG] From {addr}: {message}")
-
+			if showadditionalinfo: print(f"  [DEBUG] From {addr}: {message}")
 			dataIn = json.loads(message)
-
-			XMID, TitleName = lookupID(dataIn['id'])
-			inTitleID = dataIn['id'].upper()
-
-			large_image = f"{CDNURL}/{inTitleID[:4]}/{inTitleID}.png"
-			try:
-				with urllib.request.urlopen(large_image) as response:
-					if response.status != 200:
-						large_image = smallimage
-			except:
-				large_image = smallimage
-
-			presenceData = {
-				"type": 0,
-				"details": TitleName,
-				"timestamps": {"start": int(time.time())},
-				"assets": {
-					"large_image": large_image,
-					"large_text": f"TitleID: {dataIn['id']}",
-					"small_image": smallimage
-				},
-				"instance": True,
-			}
-
-			if "name" in dataIn and dataIn["name"] and dataIn["name"].strip() and dataIn["name"].lower() != "default.xbe":
-				presenceData["details"] = dataIn["name"]
-				TitleName = dataIn["name"]
-			elif XMID != "00000000":
-				presenceData["buttons"] = [{"label": "Title Info", "url": f"{APIURL}/title.php?{XMID}"}]
-
-			presence.set(presenceData)
-			print(f"  [TCP-INFO] Playing: {TitleName}\n             TitleID: {dataIn['id']} ({XMID})")
-
+			if not dataIn.get('id'):
+				print(f"  {infolabel} Presence cleared.")
+				presence.clear()
+				continue
+			process_message(dataIn, infolabel)
 		except Exception as e:
 			print(f"  [TCP ERROR] {e}")
-
 		finally:
 			conn.close()
+
+def process_message(dataIn, variable):
+	XMID, TitleName = lookupID(dataIn['id'])
+	inTitleID = dataIn['id'].upper()
+
+	large_image = f"{CDNURL}/{inTitleID[:4]}/{inTitleID}.png"
+	
+	try:
+		with urllib.request.urlopen(large_image) as response:
+			if response.status != 200:
+				large_image = smallimage
+	except:
+		large_image = smallimage
+
+	presenceData = {
+		"type": 0,
+		"details": TitleName,
+		"timestamps": {"start": int(time.time())},
+		"assets": {
+			"large_image": large_image,
+			"large_text": f"TitleID: {dataIn['id']}",
+			"small_image": smallimage
+		},
+		"instance": True,
+	}
+
+	if "name" in dataIn and dataIn["name"] and dataIn["name"].strip() and dataIn["name"].lower() != "default.xbe":
+		presenceData["details"] = dataIn["name"]
+		TitleName = dataIn["name"]
+	elif XMID != "00000000":
+		presenceData["buttons"] = [{"label": "Title Info", "url": f"{APIURL}/title.php?{XMID}"}]
+
+	presence.set(presenceData)
+	print(f"  {variable} Playing: {TitleName}\n             TitleID: {dataIn['id']} ({XMID})")
 
 # === Main async WebSocket server entry point ===
 async def main():
