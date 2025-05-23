@@ -84,7 +84,7 @@ async def clientHandler(websocket: wetSocks):
 # === UDP listener added here ===
 def listen_udp():
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	sock.bind(('0.0.0.0', 1102))  # Same port as WebSocket
+	sock.bind(('0.0.0.0', 1102)) 
 	print("[UDP] Listening for raw relay packets on port 1102...")
 
 	while True:
@@ -124,8 +124,8 @@ def listen_udp():
 # === Main async WebSocket server entry point ===
 async def main():
 	serverIP = getIP()
-	server = await websockets.serve(clientHandler, serverIP, 1102)
-	print(f"Server started on ws://{serverIP}:1102\nWaiting for connection...")
+	server = await websockets.serve(clientHandler, serverIP, 1101)
+	print(f"Server started on ws://{serverIP}:1101\nWaiting for connection...")
 
 	threading.Thread(target=listen_udp, daemon=True).start()
 
