@@ -16,14 +16,46 @@ import asyncio, configparser, json, os, socket, threading, time, urllib.request,
 from discordrp import Presence
 from websockets.server import WebSocketServerProtocol as wetSocks
 
-clientID = "1304454011503513600" # Discord client ID
-presence = Presence(clientID)
-smallimage = "https://cdn.discordapp.com/avatars/1304454011503513600/6be191f921ebffb2f9a52c1b6fc26dfa"
+# Show additional info
 showadditionalinfo = 0
 
+CLIENTID = "1304454011503513600" # Discord client ID
 APIURL = "https://mobcat.zip/XboxIDs"
 CDNURL = "https://raw.githubusercontent.com/MobCat/MobCats-original-xbox-game-list/main/icon"
+SMALLIMAGE = "https://cdn.discordapp.com/avatars/1304454011503513600/6be191f921ebffb2f9a52c1b6fc26dfa"
 CONFIG = "Server Settings.ini"
+
+# Only start discord on windows, I'm not sure how to do it on Linux/Mac as don't know where stuff is installed.
+if os.name == 'nt':
+	try:
+		presence = Presence(CLIENTID)
+	except FileNotFoundError:
+		# Start Discord
+		local = os.getenv("LOCALAPPDATA")
+		discord_path = fr"{local}\Discord\Update.exe"
+		
+		# Check for Discord
+		while os.system('tasklist | findstr Discord.exe > nul 2>&1') != 0:
+			if os.path.exists(discord_path):
+				os.system(f'start "" "{discord_path}" --processStart Discord.exe')
+				print("Starting Discord...")
+				time.sleep(5)
+			else:
+				print(f"Error: Discord not found at:\n{discord_path}")
+				exit()
+			time.sleep(1)
+
+		# Loop
+		while True:
+			try:
+				presence = Presence(CLIENTID)
+				os.system('cls')
+				break
+			except FileNotFoundError:
+				print("Error: Waiting for Discord to fully start.")
+				time.sleep(5)
+else:
+	presence = Presence(CLIENTID)
 
 def get_server_config():
 	base_path = os.path.dirname(os.path.abspath(__file__))
@@ -149,9 +181,9 @@ def process_message(dataIn, variable):
 	try:
 		with urllib.request.urlopen(large_image) as response:
 			if response.status != 200:
-				large_image = smallimage
+				large_image = SMALLIMAGE
 	except:
-		large_image = smallimage
+		large_image = SMALLIMAGE
 
 	presenceData = {
 		"type": 0,
@@ -160,7 +192,7 @@ def process_message(dataIn, variable):
 		"assets": {
 			"large_image": large_image,
 			"large_text": f"TitleID: {dataIn['id']}",
-			"small_image": smallimage
+			"small_image": SMALLIMAGE
 		},
 		"instance": True,
 	}
