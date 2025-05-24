@@ -122,7 +122,7 @@ def listen_tcp():
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	sock.bind(('0.0.0.0', TCP_PORT))
 	sock.listen(5)
-	print(f"  [TCP] Listening for connections on port {TCP_PORT}...\n")
+	print(f"  [TCP] Listening for connections on port {TCP_PORT}...")
 
 	while True:
 		conn, addr = sock.accept()
@@ -201,7 +201,7 @@ print(r'''
   \ \/ / '_ \ / _` \ \| __|/ _` | __/ __|
    >  <| |_) | (_| |\ \ |_  (_| | |_\__ \
   /_/\_\_.__/ \__,_\__/\__|\__,_|\__|___/
-  xbdStats Server 20250523
+  xbdStats Server 20250524
 ''')
 
 asyncio.run(main())

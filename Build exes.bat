@@ -24,7 +24,7 @@ start /wait C:\Python312\Scripts\cxfreeze.exe "!extra_name1!.py" --target-dir "!
 		echo "!archive_name!\!archive_name!.exe"
 	)>"Run !archive_name!.bat"
 	(
-		echo @Echo off
+		echo @Echo off ^& Mode con:cols=80 lines=18 ^& Color 70 ^& title !archive_name!
 		echo if not exist "Server Settings.ini" ^(
 		echo 	echo ^^[server^^]
 		echo 	echo port=1102
@@ -36,8 +36,8 @@ start /wait C:\Python312\Scripts\cxfreeze.exe "!extra_name1!.py" --target-dir "!
 	del /q "Run !archive_name!.bat" > NUL
 	
 	(
-		echo @Echo off
-		echo start "" "!archive_name!\!archive_name!.exe"
+		echo @Echo off ^& Mode con:cols=80 lines=18 ^& title !archive_name!
+		echo start "!archive_name!" "!archive_name!\!archive_name!.exe"
 		echo.
 		echo if not exist "Client Test Settings.ini" ^(
 		echo 	echo ^^[server^^]
@@ -45,7 +45,7 @@ start /wait C:\Python312\Scripts\cxfreeze.exe "!extra_name1!.py" --target-dir "!
 		echo 	echo port=1102
 		echo ^)^>"Client Test Settings.ini"
 		echo.
-		echo start "" "!extra_name1!\!extra_name1!.exe"
+		echo start "!extra_name1!" "!extra_name1!\!extra_name1!.exe"
 	)>"Run !archive_name! + !extra_name1!.bat"
 
 	"!zip!" a "!archive_name!.zip" "Run !archive_name! + !extra_name1!.bat" -mx=9 -r -y
